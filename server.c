@@ -50,6 +50,8 @@ void start()
 
     check(bind(server_fd, (struct sockaddr*)&address, addrlen), "bind");
     check(listen(server_fd, 1), "listen");
+    setHeader("HTTP/1.1", "200 OK");
+    setHeader("server", "glayson/0.0.1");
 }
 
 int new_client()
@@ -60,18 +62,33 @@ int new_client()
     return newsocket;
 }
 
-void close_client(int client)
-{
-    check(shutdown(client, 0), "shutdown");
-}
 int http_send(int client, const char *str)
 {
-    setStatus(200);
-    setHeader("content-type", "application/json; charset=utf-8");
     char buffer[1024 + strlen(str)];
     strcpy(buffer, header_toString());
     strcat(buffer, str);
     return write(client, buffer, strlen(buffer));
+}
+
+int http_send_file(int client, const char *path)
+{
+    FILE *file;
+    file = fopen(path, "r");
+    if(file == NULL)
+    {
+        perror("fopen failure");
+        return -1;
+    }
+    fseek(file, 0L, SEEK_END);
+    size_t szfile = ftell(file);
+    rewind(file);
+    char buffer[ szfile + 1];
+    fread(buffer, szfile, 1, file);
+    buffer[szfile] = 0;
+    puts(buffer);
+    fclose(file);
+    setHeader("content-type", "text/html");
+    return http_send(client, buffer);
 }
 
 int main(int argc, char *argv[])
@@ -81,20 +98,16 @@ int main(int argc, char *argv[])
     char buffer[1024];
     int valread;
 
-    while(1)
-    {
-        newsocket = new_client();
-        valread = read(newsocket, buffer, 1024);
-    
-        buffer[valread] = 0;
+    newsocket = new_client();
+    valread = read(newsocket, buffer, 1024);
 
-        puts(buffer);
-        
-        http_send(newsocket, "{\"nome\":\"glayson\"}");
+    buffer[valread] = 0;
 
-        close_client(newsocket);
-    } 
-    
+    puts(buffer);
+    http_send_file(newsocket, "index.html");
+
+
+    while(1);
 
     return 0;
 }
