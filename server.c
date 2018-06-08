@@ -3,7 +3,6 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <string.h>
 
 #include "header.h"
 
@@ -11,19 +10,11 @@
 
 typedef char* string;
 
-string concat(string one, string two) 
-{
-    char str[strlen(one)+strlen(two)+1];
-    strcpy(str, one);
-    strcat(str, two);
-    return str;
-}
-
 void check(int condition, string function)
 {
     if(condition < 0)
     {
-        perror(concat(function, " failure"));
+        perror(str_concat(function, " failure"));
         exit(EXIT_FAILURE);
     }
 }
@@ -34,6 +25,7 @@ socklen_t addrlen = sizeof(address);
 
 void start()
 {
+    header_init();
     int newsocket;
     int opt = 1;
     
@@ -50,8 +42,8 @@ void start()
 
     check(bind(server_fd, (struct sockaddr*)&address, addrlen), "bind");
     check(listen(server_fd, 1), "listen");
-    setHeader("HTTP/1.1", "200 OK");
-    setHeader("server", "glayson/0.0.1");
+    setStatus(200);
+    response_setHeader("server", "glayson/0.0.1");
 }
 
 int new_client()
@@ -64,10 +56,9 @@ int new_client()
 
 int http_send(int client, const char *str)
 {
-    char buffer[1024 + strlen(str)];
-    strcpy(buffer, header_toString());
-    strcat(buffer, str);
-    return write(client, buffer, strlen(buffer));
+    char *buffer;
+    buffer = str_concat(response_header_toString(), str);
+    return write(client, buffer, str_len(buffer));
 }
 
 int http_send_file(int client, const char *path)
@@ -85,9 +76,8 @@ int http_send_file(int client, const char *path)
     char buffer[ szfile + 1];
     fread(buffer, szfile, 1, file);
     buffer[szfile] = 0;
-    puts(buffer);
     fclose(file);
-    setHeader("content-type", "text/html");
+    response_setHeader("content-type", "text/html");
     return http_send(client, buffer);
 }
 
@@ -98,16 +88,17 @@ int main(int argc, char *argv[])
     char buffer[1024];
     int valread;
 
-    newsocket = new_client();
-    valread = read(newsocket, buffer, 1024);
+    while(1)
+    {
+        newsocket = new_client();
+        valread = read(newsocket, buffer, 1024);
 
-    buffer[valread] = 0;
+        buffer[valread] = 0;
 
-    puts(buffer);
-    http_send_file(newsocket, "index.html");
+        request_getHeader(buffer);
 
-
-    while(1);
-
+        http_send_file(newsocket, "index.html");
+        shutdown(newsocket, SHUT_RDWR);
+    }
     return 0;
 }
