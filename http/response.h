@@ -10,7 +10,6 @@ struct http_response {
 		int number;
 	} status;
 	struct hashmap *header;
-    //char *content;
 };
 
 struct http_response new_response_header();

@@ -27,7 +27,7 @@ struct list *handles;
 int cli;
 
 void http_init();
-static void http_read();
+static char * http_read();
 void http_write(struct http_response, char*);
 static void http_close();
 static struct http_server server_config();

@@ -13,7 +13,21 @@ uint str_len(char* str)
 
 int str_comp(char *str, char *str1)
 {
-	int m = min(str_len(str), str_len(str1));
+	if(str == NULL)
+	{
+		if(str1 == NULL)
+		{
+			return 0;
+		}
+		else
+		{
+			return -1;
+		}
+	}
+	if(str1 == NULL)
+		return 1;
+	int len = str_len(str), len1 = str_len(str1);
+	int m = min(len, len1);
 	int i;
 	for(i=0;i<m;i++)
 	{
@@ -23,7 +37,14 @@ int str_comp(char *str, char *str1)
 		 {
 		 	return 1;
 		 }
+		str++;str1++;
 	}
+	if(len == len1)
+		return 0;
+	else if(len > len1)
+		return 1;
+	else
+		return -1;
 	return 0;
 }
 
@@ -57,4 +78,25 @@ char *str_concat(char *str, char *str1)
 	}
 	cat[len+len1] = '\0';
 	return cat;
+}
+
+char *get_line(char *str)
+{
+    char *it, *buffer;
+    int len_line = 0, i;
+    it = str;
+    while(*it != '\0' && *it != '\n')
+    {
+        len_line++;
+        it++;
+    }
+    buffer = (char*)malloc(sizeof(char)*len_line + 1);
+    it = str;
+    for(i = 0; i < len_line; i++)
+    {
+        buffer[i] = *it;
+        it++;
+    }
+    buffer[i] = '\0';
+    return buffer;
 }

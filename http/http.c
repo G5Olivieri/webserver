@@ -13,22 +13,29 @@ void http_init()
 	cli = 0;
 }
 
-static void http_read()
+static char *http_read()
 {
 	int aux;
-	char *buffer = (char*)malloc(sizeof(char)*1024), *it, uri[4];
+	char *buffer = (char*)malloc(sizeof(char)*1024), *it, *uri = (char*)malloc(sizeof(char)*4);
 
 	aux = read(cli, buffer, 1024);
 	buffer[aux] = 0;
-	puts(buffer);
+	printf(buffer);
 	it = buffer;
 	while(*it != '\0' && *it != ' ')
-	{
+	{ 
 		it++;
 	}
 	it++;
-	
-	return it;
+	aux = 0;
+	while(*it != ' ' && *it != '\0')
+	{
+		uri[aux] = *it;
+		it++; aux++;
+	}
+	uri[aux] = '\0';
+	free(buffer);
+	return uri;
 }
 
 void http_write(struct http_response hr, char *str)
@@ -37,13 +44,12 @@ void http_write(struct http_response hr, char *str)
 	aux = str;
 	str = str_concat(response_header_to_string(hr), str);
 	free(aux);
-	puts(str);
 	write(cli, str, str_len(str));
 }
 
 static void http_close()
 {
-	shutdown(cli, SHUT_RDWR); // SHUT_RD, SHUT_WR
+	error(shutdown(cli, SHUT_RDWR), shutdown); // SHUT_RD, SHUT_WR
 }
 
 static struct http_server server_config(int port)
@@ -85,6 +91,7 @@ void http_run(int port)
 			}
 			it = it->next;
 		}
+		free(uri);
 		http_close();
 	}
 }

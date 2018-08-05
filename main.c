@@ -10,14 +10,14 @@
 void vindex(struct http_response *hh)
 {
 	set_response_header(hh, "Content-Type", "text/html");
-	char *str = new_string("<html><head><title>Glayson</title></head><body><h1>Glayson<h1></body></html>");
+	char *str = new_string("<html><head><title>Glayson</title></head><body><h1>Glayson</h1></body></html>");
 	http_write(*hh, str);
 }
 
 void gindex(struct http_response *hh)
 {
 	set_response_header(hh, "Content-Type", "text/html");
-	char *str = new_string("<html><head><title>Glayson</title></head><body><h1>Meu Piru<h1></body></html>");
+	char *str = new_string("<html><head><title>Glayson</title></head><body><h1>Teste</h1></body></html>");
 	http_write(*hh, str);
 }
 
