@@ -114,10 +114,3 @@ struct http_request *string_to_request_header(char *request)
     }
     return request_header;
 }
-
-int main()
-{
-    struct http_request *request = string_to_request_header("GET / HTTP/1.1\r\nUser-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.140 Safari/537.36 Edge/17.17134\r\nAccept-Language: pt-BR,pt;q=0.5\r\nAccept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\r\nUpgrade-Insecure-Requests: 1\r\nAccept-Encoding: gzip, deflate\r\nHost: localhost:2666\r\nDNT: 1\r\nConnection: Keep-Alive\r\n\r\n");
-    
-    return 0;
-}
