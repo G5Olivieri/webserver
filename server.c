@@ -1,104 +1,48 @@
+#include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
+#include <sys/utsname.h>
 
-#include "header.h"
+#include "string.h"
+#include "http/http.h"
 
-#define PORT 8080
+#define PORT 2666
 
-typedef char* string;
-
-void check(int condition, string function)
+void vindex(struct http_response *hh, struct http_request *req)
 {
-    if(condition < 0)
-    {
-        perror(str_concat(function, " failure"));
-        exit(EXIT_FAILURE);
-    }
+	set_response_header(hh, "Content-Type", "text/html");
+	char *str = new_string("<html><head><title>Glayson</title></head><body><h1>Glayson</h1></body></html>");
+	http_write(*hh, str);
 }
 
-int server_fd;
-struct sockaddr_in address;
-socklen_t addrlen = sizeof(address);
-
-void start()
+void gindex(struct http_response *hh, struct http_request *req)
 {
-    header_init();
-    int newsocket;
-    int opt = 1;
-    
-    server_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-
-    check(server_fd, "socket");
-    check(setsockopt(server_fd, SOL_SOCKET, 
-            SO_REUSEADDR | SO_REUSEPORT, &opt, 
-            sizeof(opt)), "setsockopt");
-
-    address.sin_family = AF_INET;
-    address.sin_port = htons(PORT);
-    address.sin_addr.s_addr = INADDR_ANY;
-
-    check(bind(server_fd, (struct sockaddr*)&address, addrlen), "bind");
-    check(listen(server_fd, 1), "listen");
-    setStatus(200);
-    response_setHeader("server", "glayson/0.0.1");
+	set_response_header(hh, "Content-Type", "text/html");
+	char *str = new_string("<html><head><title>Glayson</title></head><body><h1>Teste</h1></body></html>");
+	http_write(*hh, str);
 }
 
-int new_client()
+void hindex(struct http_response *hh, struct http_request *req)
 {
-    int newsocket;
-    newsocket = accept(server_fd, (struct sockaddr*)&address, &addrlen);
-    check(newsocket, "accept");
-    return newsocket;
+	set_response_status(hh, 404);
+	char *str = new_string("");
+	http_write(*hh, str);
 }
 
-int http_send(int client, const char *str)
+void eindex(struct http_response *hh, struct http_request *req)
 {
-    char *buffer;
-    buffer = str_concat(response_header_toString(), str);
-    return write(client, buffer, str_len(buffer));
+	http_write(*hh, new_string(file_read("index.html")));
 }
 
-int http_send_file(int client, const char *path)
+int main()
 {
-    FILE *file;
-    file = fopen(path, "r");
-    if(file == NULL)
-    {
-        perror("fopen failure");
-        return -1;
-    }
-    fseek(file, 0L, SEEK_END);
-    size_t szfile = ftell(file);
-    rewind(file);
-    char buffer[ szfile + 1];
-    fread(buffer, szfile, 1, file);
-    buffer[szfile] = 0;
-    fclose(file);
-    response_setHeader("content-type", "text/html");
-    return http_send(client, buffer);
-}
-
-int main(int argc, char *argv[])
-{
-    start();
-    int newsocket;
-    char buffer[1024];
-    int valread;
-
-    while(1)
-    {
-        newsocket = new_client();
-        valread = read(newsocket, buffer, 1024);
-
-        buffer[valread] = 0;
-
-        request_getHeader(buffer);
-
-        http_send_file(newsocket, "index.html");
-        shutdown(newsocket, SHUT_RDWR);
-    }
-    return 0;
+	http_init();
+	http_set_public("./public");
+	http_set_handle("/", vindex);
+	http_set_handle("/oi", gindex);
+	http_set_handle("/merda", hindex);
+	http_set_handle("/glayson", eindex);
+	http_run(PORT);
+	
+	return 0;
 }
